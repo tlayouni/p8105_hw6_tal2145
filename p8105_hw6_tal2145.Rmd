@@ -51,7 +51,36 @@ fit = lm(bwt ~ bhead + blength + delwt + mrace + gaweeks, data = birthweight_df)
 summary(fit)
 ```
 
+#### Part 3: Plotting the residuals against the fitted values
 
+```{r}
+birthweight_df %>% 
+  modelr::add_residuals(fit) %>% 
+  modelr::add_predictions(fit) %>% 
+  ggplot(aes(x = pred, y = resid)) + 
+  geom_point() + 
+  labs(
+    title = "Fitted Values for Birthweight Regression Model compared to Residuals",
+    x = "Predicted Values",
+    y = "Model Residuals"
+  )
+```
+
+#### Comparing the hypothesized model to two additional models for birthweight using cross-validation
+
+* using `crossv_mc` and `purr` functions to compare prediction error between the three models
+
+* creating two linear models to compare to hypothesized model
+
+```{r}
+fit_2 = lm(bwt ~ gaweeks + blength, data = birthweight_df)
+
+summary(fit_2)
+
+fit_3 = lm(bwt ~ bhead + babysex + blength + bhead * babysex * blength, data = birthweight_df)
+
+summary(fit_3)
+```
 
 
 
