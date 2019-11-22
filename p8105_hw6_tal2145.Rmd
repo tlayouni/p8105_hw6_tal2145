@@ -33,3 +33,25 @@ birthweight_df =
   )
 ```
 
+#### Part 2: Building a linear model
+
+First proposed linear model: 
+
+* this model was created through a data-driven process, adding in variables one at a time, to see whether they were significant and whether the adjusted r-squared changed by an appreciable amount to determine whether the variable should be included in my regression model. gaweeks was always included as it is a key factor in an infant's birthweight.
+
+```{r}
+birthweight_df = 
+  birthweight_df %>% 
+  mutate(
+    mrace = fct_infreq(mrace)
+  )
+
+fit = lm(bwt ~ bhead + blength + delwt + mrace + gaweeks, data = birthweight_df)
+
+summary(fit)
+```
+
+
+
+
+
