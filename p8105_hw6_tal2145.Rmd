@@ -8,6 +8,7 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+library(modelr)
 ```
 
 ## Problem 1
@@ -68,9 +69,10 @@ birthweight_df %>%
 
 #### Comparing the hypothesized model to two additional models for birthweight using cross-validation
 
-* using `crossv_mc` and `purr` functions to compare prediction error between the three models
+*  using `crossv_mc` and `purr` functions to compare prediction error between the three models
 
-* creating two linear models to compare to hypothesized model
+
+##### Creating two linear models to compare to hypothesized model
 
 ```{r}
 fit_2 = lm(bwt ~ gaweeks + blength, data = birthweight_df)
@@ -82,5 +84,42 @@ fit_3 = lm(bwt ~ bhead + babysex + blength + bhead * babysex * blength, data = b
 summary(fit_3)
 ```
 
+
+```{r}
+cv_df = 
+  crossv_mc(birthweight_df, 4342)
+
+cv_df =
+  cv_df %>% 
+  mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble))
+```
+
+```{r}
+cv_df = 
+  cv_df %>% 
+  mutate(
+    fit  = map(train, ~lm(bwt ~ bhead + blength + delwt + mrace + gaweeks, data = birthweight_df)),
+         fit_2  = map(train, ~lm(bwt ~ gaweeks + blength, data = birthweight_df)),
+         fit_3  = map(train, ~lm(bwt ~ bhead + babysex + blength + bhead * babysex * blength, data = birthweight_df)) 
+  ) %>% 
+  mutate(rmse_fit = map2_dbl(fit, test, ~rmse(model = .x, data = .y)),
+         rmse_fit_2 = map2_dbl(fit_2, test, ~rmse(model = .x, data = .y)),
+         rmse_fit_3 = map2_dbl(fit_3, test, ~rmse(model = .x, data = .y)))
+
+```
+
+```{r}
+cv_df %>% 
+  select(starts_with("rmse")) %>% 
+  pivot_longer(
+    everything(),
+    names_to = "model", 
+    values_to = "rmse",
+    names_prefix = "rmse_") %>% 
+  mutate(model = fct_inorder(model)) %>% 
+  ggplot(aes(x = model, y = rmse)) + geom_violin()
+```
 
 
