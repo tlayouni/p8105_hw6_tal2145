@@ -67,23 +67,9 @@ birthweight_df %>%
   )
 ```
 
-#### Comparing the hypothesized model to two additional models for birthweight using cross-validation
+#### Part 4: Comparing the hypothesized model to two additional models for birthweight using cross-validation
 
 *  using `crossv_mc` and `purr` functions to compare prediction error between the three models
-
-
-##### Creating two linear models to compare to hypothesized model
-
-```{r}
-fit_2 = lm(bwt ~ gaweeks + blength, data = birthweight_df)
-
-summary(fit_2)
-
-fit_3 = lm(bwt ~ bhead + babysex + blength + bhead * babysex * blength, data = birthweight_df)
-
-summary(fit_3)
-```
-
 
 ```{r}
 cv_df = 
@@ -110,6 +96,8 @@ cv_df =
 
 ```
 
+##### Plotting and comparing RMSE between the three models 
+
 ```{r}
 cv_df %>% 
   select(starts_with("rmse")) %>% 
@@ -119,7 +107,31 @@ cv_df %>%
     values_to = "rmse",
     names_prefix = "rmse_") %>% 
   mutate(model = fct_inorder(model)) %>% 
-  ggplot(aes(x = model, y = rmse)) + geom_violin()
+  ggplot(aes(x = model, y = rmse)) + geom_violin() + 
+  labs(
+    title = "Comparing RMSE between three hypothesized models",
+    x = "Model",
+    y = "RMSE"
+  ) 
+```
+
+## Problem 2
+***
+
+#### Part 1: Loading in the Central Park Weather data for 2017
+
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
 ```
 
 
