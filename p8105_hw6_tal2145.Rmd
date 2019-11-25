@@ -201,28 +201,27 @@ weather_bootstrapped %>%
 #### 95% Confidence Intervals for R-squared 
 
 ```{r}
+alpha = 0.05
+
 weather_bootstrapped %>% 
-  summarise(
-    mean_r2 = mean(r.squared),
-    sd_r2 = sd(r.squared),
-    error = qnorm(0.975)*sd_r2/sqrt(5000),
-    CI_lower = mean_r2 - error,
-    CI_upper = mean_r2 + error
+  summarize(
+    lower_CI = quantile(r.squared, alpha / 2),
+    upper_CI = quantile(r.squared, 1 - alpha / 2)
   )
 ```
 
 #### 95% Confidence Intervals for log (β1*β2)
 
 ```{r}
+alpha = 0.05
+
 weather_bootstrapped %>% 
-  summarise(
-    mean_betas = mean(product_logb),
-    sd_betas = sd(product_logb),
-    error_betas = qnorm(0.975)*sd_betas/sqrt(5000),
-    CI_lower = mean_betas - error_betas,
-    CI_upper = mean_betas + error_betas
+  summarize(
+    lower_CI = quantile(product_logb, alpha / 2),
+    upper_CI = quantile(product_logb, 1 - alpha / 2)
   )
 ```
+
 
 
 
