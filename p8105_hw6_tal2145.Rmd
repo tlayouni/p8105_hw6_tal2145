@@ -16,8 +16,9 @@ library(modelr)
 
 #### Part 1: Loading and cleaning `birthweight` dataset
 
-* Loading csv 
-* cleaning variable types 
+* Loading `birthweight.csv` 
+* cleaning variable types and recoding values to meaningful names
+* checked for missing data
 
 ```{r}
 birthweight_df = 
@@ -32,11 +33,13 @@ birthweight_df =
     babysex = as.factor(babysex),
     babysex = recode(babysex, "1" = "male", "2" = "female")
   )
+
+colSums(is.na(birthweight_df))
 ```
 
 #### Part 2: Building a linear model
 
-First proposed linear model: 
+Proposed linear model: 
 
 * this model was created through a data-driven process, adding in variables one at a time, to see whether they were significant and whether the adjusted r-squared changed by an appreciable amount to determine whether the variable should be included in my regression model. gaweeks was always included as it is a key factor in an infant's birthweight.
 
@@ -52,7 +55,7 @@ fit = lm(bwt ~ bhead + blength + delwt + mrace + gaweeks, data = birthweight_df)
 summary(fit)
 ```
 
-#### Part 3: Plotting the residuals against the fitted values
+#### Part 3: Plotting the residuals against the fitted values for the hypothesized model
 
 ```{r}
 birthweight_df %>% 
@@ -72,7 +75,7 @@ birthweight_df %>%
 *  using `crossv_mc` and `purr` functions to compare prediction error between the three models
 
 
-**Using `crossv_mc` to perform the training/testing split and storing the data as a data frame**
+**Using `crossv_mc` to perform the training/testing split and storing the data as a dataframe**
 
 ```{r}
 cv_df = 
@@ -121,7 +124,7 @@ cv_df %>%
   ) 
 ```
 
-Based on the above plot showing the variance in prediction error distribution across the three models, it appears the hyptohesized model that I created is optimal, but only slightly better than the model that contains head circumference, length, sex and all interaction terms between them. We can see this because `fit` or my hypothesized model has the lowest RMSE distribution of all three models and this means it is a better predictor of birthweight in thid sample. 
+Based on the above plot showing the variance in prediction error distribution across the three models, it appears the hypothesized model that I created is optimal, but only slightly better than the model that contains head circumference, length, sex and all interaction terms between them. We can see this because `fit` or my hypothesized model, has the lowest RMSE distribution of all three models and this means it is a better predictor of birthweight in this sample. 
 
 
 ## Problem 2
@@ -146,9 +149,11 @@ weather_df =
 #### Part 1: Drawing boostrapping samples from `weather_df`
 
 * drawing 5000 bootstrapped samples
-* creatiing log(B1*B0) variable
+* creating log(B1*B0) variable
 
 ```{r}
+set.seed(1)
+
 weather_bootstrapped = 
   weather_df %>% 
   modelr::bootstrap(n = 5000) %>% 
@@ -177,6 +182,8 @@ weather_bootstrapped =
 
 #### Plotting distribution of r-squared and product of the betas. 
 
+**Plotting log (β1*β2) Distribution**
+
 ```{r}
 weather_bootstrapped %>% 
   ggplot(aes(x = product_logb)) +
@@ -186,6 +193,10 @@ weather_bootstrapped %>%
     x = "log (β1*β2)"
   )
 ```
+
+The distribution of log (β1*β2) for the 5000 boostrapped samples appears to be normally distributed and symmetric, with a peak around 2.02 or so and most of the data between 1.975 and 2.05.  
+
+**Plotting log R-squared Distribution**
 
 ```{r}
 weather_bootstrapped %>% 
@@ -197,6 +208,7 @@ weather_bootstrapped %>%
   )
 ```
 
+The distribution for the r-squared values of our 5000 bootstrapped samples has a peak around 1.93 or so with most values between 0.89 and 0.93. While it appears to be normally distributed, it looks like it is slightly left-skewed, with a longer tail on the left side of the distribution. 
 
 #### 95% Confidence Intervals for R-squared 
 
@@ -210,6 +222,9 @@ weather_bootstrapped %>%
   )
 ```
 
+The 95% Confidence interval for the r-squared in our bootstrapped samples is 0.894 to 0.927. 
+
+
 #### 95% Confidence Intervals for log (β1*β2)
 
 ```{r}
@@ -222,6 +237,7 @@ weather_bootstrapped %>%
   )
 ```
 
+The 95% Confidence interval for log (β1*β2) in our bootstrapped samples is 1.96 to 2.06. 
 
 
 
