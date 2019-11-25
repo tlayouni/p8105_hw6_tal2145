@@ -71,6 +71,9 @@ birthweight_df %>%
 
 *  using `crossv_mc` and `purr` functions to compare prediction error between the three models
 
+
+**Using `crossv_mc` to perform the training/testing split and storing the data as a data frame**
+
 ```{r}
 cv_df = 
   crossv_mc(birthweight_df, 4342)
@@ -81,6 +84,9 @@ cv_df =
     train = map(train, as_tibble),
     test = map(test, as_tibble))
 ```
+
+
+**Fitting models (hypothesized and two comparisons) and assessing prediction accuracy**
 
 ```{r}
 cv_df = 
@@ -96,7 +102,7 @@ cv_df =
 
 ```
 
-##### Plotting and comparing RMSE between the three models 
+**Plotting and comparing RMSE between the three models**
 
 ```{r}
 cv_df %>% 
@@ -115,6 +121,9 @@ cv_df %>%
   ) 
 ```
 
+Based on the above plot showing the variance in prediction error distribution across the three models, it appears the hyptohesized model that I created is optimal, but only slightly better than the model that contains head circumference, length, sex and all interaction terms between them. We can see this because `fit` or my hypothesized model has the lowest RMSE distribution of all three models and this means it is a better predictor of birthweight in thid sample. 
+
+
 ## Problem 2
 ***
 
@@ -132,6 +141,60 @@ weather_df =
     tmin = tmin / 10,
     tmax = tmax / 10) %>%
   select(name, id, everything())
+```
+
+#### Part 1: Drawing boostrapping samples from `weather_df`
+
+* drawing 5000 bootstrapped samples
+* creatiing log(B1*B0) variable
+
+```{r}
+weather_bootstrapped = 
+  weather_df %>% 
+  modelr::bootstrap(n = 5000) %>% 
+  mutate(
+    models = map(strap, ~lm(tmax ~ tmin, data = .x)),
+    betas = map(models, broom::tidy),
+    ) %>% 
+  select(-strap) %>% 
+  unnest(betas) %>% 
+  select(models, term, estimate) %>% 
+  mutate(r2 = map(models, broom::glance)) %>% 
+  unnest(r2) %>% 
+  select(term, estimate, r.squared) %>%
+    pivot_wider(
+      names_from = "term", 
+      values_from = "estimate"
+    ) %>% 
+  rename(
+    "beta0" = "(Intercept)",
+    "beta1" = "tmin"
+  ) %>% 
+  mutate(
+    product_logb = log(beta0*beta1)
+  )
+```
+
+#### Plotting distribution of r-squared and product of the betas. 
+
+```{r}
+weather_bootstrapped %>% 
+  ggplot(aes(x = product_logb)) +
+  geom_density() +
+  labs(
+    title = "Distribution of log (β1*β2)",
+    x = "log (β1*β2)"
+  )
+```
+
+```{r}
+weather_bootstrapped %>% 
+  ggplot(aes(x = r.squared)) +
+  geom_density() +
+  labs(
+    title = "Distribution of R-squared",
+    x = "R-squared"
+  )
 ```
 
 
